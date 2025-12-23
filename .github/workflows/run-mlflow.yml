@@ -45,7 +45,7 @@ jobs:
       - name: Run mlflow project
         run: |
           # Kita pass nama experiment ke dalam mlflow run
-          mlflow run MLproject --env-manager=local --experiment-name ${{ env.EXPERIMENT_NAME }}
+          mlflow run MLProject --env-manager=local --experiment-name ${{ env.EXPERIMENT_NAME }}
 
       - name: Get latest MLflow run_id
         run: |
