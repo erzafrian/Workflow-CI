@@ -32,16 +32,6 @@ jobs:
           # Kita butuh library ini di environment runner agar bisa setup experiment
           pip install mlflow pandas scikit-learn numpy
 
-      - name: Setup MLflow Experiment
-        run: |
-          # Step ini khusus untuk membuat struktur folder mlruns dan mendaftarkan experiment
-          python -c "
-          import mlflow
-          mlflow.set_tracking_uri('${{ env.MLFLOW_TRACKING_URI }}')
-          mlflow.set_experiment('${{ env.EXPERIMENT_NAME }}')
-          print(f'Experiment {{ env.EXPERIMENT_NAME }} created successfully at {{ env.MLFLOW_TRACKING_URI }}')
-          "
-
       - name: Run mlflow project
         run: |
           # Kita pass nama experiment ke dalam mlflow run
