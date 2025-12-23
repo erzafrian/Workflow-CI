@@ -11,8 +11,8 @@ on:
 # Set variable global agar konsisten
 env:
   # Menggunakan path absolut untuk tracking URI
-  MLFLOW_TRACKING_URI: "file://${{ github.workspace }}/mlruns"
-  EXPERIMENT_NAME: "ci_retrain_model"
+  MLFLOW_TRACKING_URI: "file://${{ github.workspace }}/MLProject/mlruns"
+  EXPERIMENT_NAME: "Eksperimen_SML_KNN_Erza"
 
 jobs:
   build:
