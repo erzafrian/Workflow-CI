@@ -31,11 +31,12 @@ jobs:
           python -m pip install --upgrade pip
           # Kita butuh library ini di environment runner agar bisa setup experiment
           pip install mlflow pandas scikit-learn numpy
-
+        
       - name: Run mlflow project
+        working-directory: ./MLProject
         run: |
           # Kita pass nama experiment ke dalam mlflow run
-          mlflow run MLProject --env-manager=local --experiment-name ${{ env.EXPERIMENT_NAME }}
+          python modelling.py
 
       - name: Get latest MLflow run_id
         run: |
