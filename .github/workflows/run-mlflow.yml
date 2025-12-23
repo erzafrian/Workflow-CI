@@ -66,7 +66,7 @@ jobs:
       # Tag the Docker image
       - name: Tag Docker Image
         run: |
-          docker tag ${{ secrets.DOCKER_HUB_USERNAME }}/workflow-ci:latest
+          docker tag workflow-ci ${{ secrets.DOCKER_HUB_USERNAME }}/workflow-ci:latest
 
       # Push Docker image to Docker Hub
       - name: Push Docker Image
