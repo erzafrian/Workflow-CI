@@ -1,0 +1,10 @@
+name: eksperimen-knn-erza
+
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    parameters:
+      dataset: {type: string, default: "customer_behavior_preprocessing.csv"}
+      n_neighbors: {type: int, default: 5}
+    command: "python modelling.py {dataset} {n_neighbors}"
