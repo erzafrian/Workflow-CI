@@ -1,6 +1,7 @@
 import pandas as pd
 import mlflow
 import mlflow.sklearn
+import sys
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report, accuracy_score
 from sklearn.model_selection import train_test_split
@@ -8,6 +9,13 @@ from sklearn.model_selection import train_test_split
 mlflow.set_tracking_uri("mlruns")
 
 def train_knn():
+    try:
+        dataset_path = sys.argv[1] if len(sys.argv) > 1 else 'customer_behavior_preprocessing.csv'
+        n_neighbors_val = int(sys.argv[2]) if len(sys.argv) > 2 else 5
+    except ValueError:
+        print("Error: Argumen n_neighbors harus berupa angka.")
+        return
+
     # Mengaktifkan Autologging MLflow
     mlflow.autolog()
 
@@ -17,7 +25,7 @@ def train_knn():
     with mlflow.start_run(run_name="KNN_Baseline_Run"):
         try:
             # Load dataset hasil preprocessing
-            df = pd.read_csv('customer_behavior_preprocessing.csv')
+            df = pd.read_csv('Workflow-CI/MLProject/customer_behavior_preprocessing.csv')
             
             # Memisahkan Fitur dan Target
             X = df.drop('Customer_Rating', axis=1)
@@ -42,7 +50,7 @@ def train_knn():
             print("\nLaporan Klasifikasi:\n", classification_report(y_val, y_pred))
 
         except FileNotFoundError:
-            print("Error: File 'customer_behavior_processed.csv' tidak ditemukan. Pastikan tahap preprocessing sudah berhasil.")
+            print("Error: File 'customer_behavior_preprocessing.csv' tidak ditemukan. Pastikan tahap preprocessing sudah berhasil.")
         except Exception as e:
             print(f"Terjadi kesalahan: {e}")
 
