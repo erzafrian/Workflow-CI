@@ -83,7 +83,7 @@ def train_and_log(n_neighbors, weights):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_neighbors", type=int, required=True, default=5)
-    parser.add_argument("--weights", type=int, required=True, default=3)
+    parser.add_argument("--n_neighbors", type=int, required=False, default=5)
+    parser.add_argument("--weights", type=int, required=False, default=3)
     args = parser.parse_args()
     train_and_log(args.n_neighbors, args.weights)
