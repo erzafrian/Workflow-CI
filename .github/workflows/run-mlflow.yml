@@ -1,74 +1,53 @@
-name: CI/CD MLflow
+name: CI MLflow
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    branches: ["main"]
+    paths-ignore:
+      - './MLProject/Tautan ke Docker Hub.txt'
 
-# Set variable global agar konsisten
 env:
-  # Menggunakan path absolut untuk tracking URI
-  MLFLOW_TRACKING_URI: "file://${{ github.workspace }}/MLProject/mlruns"
-  EXPERIMENT_NAME: "Eksperimen_SML_KNN_Erza"
+  IMAGE_NAME: "knn-behavior"
+  MLFLOW_TRACKING_URI: "./MLProject/mlruns"
 
 jobs:
-  build:
+  train-test-model:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Set up Python 3.12.7
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.12.7"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          # Kita butuh library ini di environment runner agar bisa setup experiment
-          pip install mlflow pandas scikit-learn numpy
-        
-      - name: Run mlflow project
+      - name: Install Dependencies
+        run: pip install -r MLProject/requirements.txt
+
+      - name: Run Modelling
         working-directory: ./MLProject
-        run: |
-          # Kita pass nama experiment ke dalam mlflow run
-          python modelling.py
+        run: python modelling.py
 
-      - name: Get latest MLflow run_id
-        run: |
-          # Mengambil Run ID terakhir dari experiment yang spesifik
-          RUN_ID=$(python -c "
-          import mlflow
-          mlflow.set_tracking_uri('${{ env.MLFLOW_TRACKING_URI }}')
-          experiment = mlflow.get_experiment_by_name('${{ env.EXPERIMENT_NAME }}')
-          runs = mlflow.search_runs(experiment_ids=[experiment.experiment_id])
-          print(runs.iloc[0].run_id)
-          ")
-          
-          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
-          echo "Latest run_id: $RUN_ID"
+      - name: Upload Experiment Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlruns-backup
+          path: ./MLProject/mlruns
 
-      - name: Build Docker Model
-        run: |
-          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "workflow" 
-
-      # Login to Docker Hub
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      # Tag the Docker image
-      - name: Tag Docker Image
+      - name: Build and Push Docker Image
         run: |
-          docker tag workflow ${{ secrets.DOCKER_HUB_USERNAME }}/workflow:latest
-
-      # Push Docker image to Docker Hub
-      - name: Push Docker Image
-        run: |
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/workflow:latest
+          FULL_TAG="${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest"
+  
+          mlflow models build-docker \
+            -m "models:/knn_tuned_model_v2/latest" \
+            -n "$FULL_TAG"
+  
+          docker push "$FULL_TAG"
