@@ -14,7 +14,7 @@ from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, classifi
 
 mlflow.set_tracking_uri("mlruns")
 
-def train_and_log(n_neighbors, weights):
+def train_and_log(n_neighbors):
     mlflow.set_experiment("KNN_Tuning_Final")
 
     try:
@@ -30,17 +30,16 @@ def train_and_log(n_neighbors, weights):
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
         # 2. Start MLflow Run
-        with mlflow.start_run(run_name=f"KNN_k{n_neighbors}_{weights}"):
-            print(f"Training model: n_neighbors={n_neighbors}, weights={weights}")
+        with mlflow.start_run(run_name=f"KNN_k{n_neighbors}"):
+            print(f"Training model: n_neighbors={n_neighbors}")
             
             # Use the parameters passed from CLI
-            knn = KNeighborsClassifier(n_neighbors=n_neighbors, weights=weights)
+            knn = KNeighborsClassifier(n_neighbors=n_neighbors)
             knn.fit(X_train, y_train)
             y_pred = knn.predict(X_test)
 
             # Log Params and Metrics
             mlflow.log_param("n_neighbors", n_neighbors)
-            mlflow.log_param("weights", weights)
             
             metrics = {
                 "accuracy": accuracy_score(y_test, y_pred),
@@ -84,6 +83,5 @@ def train_and_log(n_neighbors, weights):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_neighbors", type=int, required=False, default=5)
-    parser.add_argument("--weights", type=int, required=False, default=3)
     args = parser.parse_args()
-    train_and_log(args.n_neighbors, args.weights)
+    train_and_log(args.n_neighbors)
