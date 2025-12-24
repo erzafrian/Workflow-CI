@@ -54,7 +54,7 @@ jobs:
 
       - name: Build Docker Model
         run: |
-          mlflow models build-docker --model-uri "models:/knn_tuned_model_v2/latest" --name "workflow" 
+          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "workflow" 
 
       # Login to Docker Hub
       - name: Log in to Docker Hub
