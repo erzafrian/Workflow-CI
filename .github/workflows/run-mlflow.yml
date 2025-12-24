@@ -4,11 +4,12 @@ on:
   push:
     branches: ["main"]
     paths-ignore:
-      - './MLProject/Tautan ke Docker Hub.txt'
+      - 'MLProject/Tautan ke Docker Hub.txt'
 
 env:
   IMAGE_NAME: "knn-behavior"
-  MLFLOW_TRACKING_URI: "./MLProject/mlruns"
+  # Menggunakan path absolut agar MLflow CLI tidak bingung
+  MLFLOW_TRACKING_URI: "${{ github.workspace }}/MLProject/mlruns"
 
 jobs:
   train-test-model:
@@ -24,17 +25,26 @@ jobs:
           python-version: "3.12.7"
 
       - name: Install Dependencies
-        run: pip install -r MLProject/requirements.txt
+        run: |
+          pip install -r MLProject/requirements.txt
+          pip install mlflow  # Pastikan mlflow terinstall di runner
 
       - name: Run Modelling
         working-directory: ./MLProject
         run: python modelling.py
 
-      - name: Upload Experiment Logs
-        uses: actions/upload-artifact@v4
-        with:
-          name: mlruns-backup
-          path: ./MLProject/mlruns
+      - name: Get latest Run ID
+        id: get_run_id
+        run: |
+          # Kita cari Run ID terbaru dari eksperimen yang dibuat modelling.py
+          RUN_ID=$(python -c "
+          import mlflow
+          import os
+          mlflow.set_tracking_uri('file://' + os.environ['MLFLOW_TRACKING_URI'])
+          runs = mlflow.search_runs(experiment_names=['Eksperimen_SML_KNN_Erza'], order_by=['attribute.start_time DESC'])
+          print(runs.iloc[0].run_id)
+          ")
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -45,9 +55,20 @@ jobs:
       - name: Build and Push Docker Image
         run: |
           FULL_TAG="${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest"
-  
+          
+          # Gunakan URI runs:/ bukannya models:/ karena kita belum pakai Model Registry
+          # Folder 'model' adalah default dari mlflow.autolog()
           mlflow models build-docker \
-            -m "models:/knn_tuned_model/latest" \
-            -n "$FULL_TAG"
-  
+            -m "runs:/$RUN_ID/model" \
+            -n "workflow_temp" \
+
+          # Tag ulang image dari mlflow ke format Docker Hub
+          docker tag workflow_temp "$FULL_TAG"
           docker push "$FULL_TAG"
+
+      - name: Upload Experiment Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlruns-backup
+          path: ./MLProject/mlruns
