@@ -7,116 +7,64 @@ on:
   pull_request:
     branches:
       - main
-      
-env:
-  CSV_URL: "MLProject/customer_behavior_preprocessing.csv"
-  TARGET_VAR: "Customer_Rating"
 
+# Set variable global agar konsisten
+env:
+  # Menggunakan path absolut untuk tracking URI
+  MLFLOW_TRACKING_URI: "file://${{ github.workspace }}/MLProject/mlruns"
+  EXPERIMENT_NAME: "Eksperimen_SML_KNN_Erza"
 
 jobs:
-  train-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE
       - uses: actions/checkout@v3
 
-      # Setup Python 3.12.7
       - name: Set up Python 3.12.7
         uses: actions/setup-python@v4
         with:
           python-version: "3.12.7"
-      
-      # Check Env Variables
-      - name: Check Env
-        run: |
-          echo $CSV_URL
-          
-      # Install Conda and create environment from conda.yaml
-      - name: Set up Conda
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          environment-file: MLProject/conda.yaml
-          activate-environment: Eksperimen_SML_KNN_Erza
-          auto-activate-base: false
-          
-       # Initialize Conda for bash shell
-      - name: Initialize Conda
-        run: |
-          echo "Initializing Conda for bash"
-          conda init bash
-          source ~/.bashrc  # Apply the changes made by 'conda init'
 
-      # Install MLflow and dependencies
-      - name: Install MLflow and dependencies
+      - name: Install dependencies
         run: |
-          source ~/.bashrc  # Ensure shell configuration is reloaded
-          conda activate Eksperimen_SML_KNN_Erza  # Ensure environment is activated
-          pip install mlflow  # Install mlflow if it wasn't installed in the environment
-          pip install -r MLProject/requirements.txt  # Optional, if there is a requirements.txt
-
-      # Run MLflow Project
-      - name: Run MLflow Project
+          python -m pip install --upgrade pip
+          # Kita butuh library ini di environment runner agar bisa setup experiment
+          pip install mlflow pandas scikit-learn numpy
+        
+      - name: Run mlflow project
+        working-directory: ./MLProject
         run: |
-          source ~/.bashrc  # Ensure shell configuration is reloaded
-          conda activate Eksperimen_SML_KNN_Erza  # Ensure environment is activated
-          cd MLProject
-          mlflow run . -P data_path=customer_behavior_preprocessing.csv --env-manager=local
-
-      # Get latest run_id
+          # Kita pass nama experiment ke dalam mlflow run
+          python modelling.py
       - name: Get latest MLflow run_id
         run: |
-          source ~/.bashrc
-          conda activate Eksperimen_SML_KNN_Erza
-          # Cek jika direktori mlruns ada dan menampilkan kontennya
-          echo "Checking contents of mlruns/"
-          ls -l mlruns/
-          RUN_ID=$(ls -td mlruns/*/ | head -n 1 | cut -d'/' -f4)
+          # Mengambil Run ID terakhir dari experiment yang spesifik
+          RUN_ID=$(python -c "
+          import mlflow
+          mlflow.set_tracking_uri('${{ env.MLFLOW_TRACKING_URI }}')
+          experiment = mlflow.get_experiment_by_name('${{ env.EXPERIMENT_NAME }}')
+          runs = mlflow.search_runs(experiment_ids=[experiment.experiment_id])
+          print(runs.iloc[0].run_id)
+          ")
+          
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
           echo "Latest run_id: $RUN_ID"
-      # Verify the existence of the model directory for RUN_ID
-      - name: Verify model directory exists for RUN_ID
+      - name: Build Docker Model
         run: |
-          source ~/.bashrc
-          conda activate Eksperimen_SML_KNN_Erza
-          echo "Verifying the model directory for RUN_ID: $RUN_ID"
-          if [ ! -d "mlruns/$RUN_ID/artifacts/model" ]; then
-            echo "Model not found for RUN_ID: $RUN_ID. Exiting."
-            exit 1
-          fi
-      # ✅ Tambahkan langkah ini untuk menyimpan mlruns/ ke GitHub
-      - name: Push changes to repository
-        run: |
-          git config --global user.name "${{ secrets.GIT_USERNAME }}"
-          git config --global user.email "${{ secrets.GIT_EMAIL }}"
-          git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git
-          git add .
-          git commit -m "Save mlruns from CI run" || echo "No changes to commit"
-          git push origin main
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-
-        # ✅ Build Docker Image from model
-      - name: Build Docker Image from MLflow model
-        run: |
-          source ~/.bashrc
-          conda activate Eksperimen_SML_KNN_Erza
-          mlflow models build-docker --model-uri "file://$GITHUB_WORKSPACE/mlruns/$RUN_ID/artifacts/model" --name workflow
-
-      # ✅ Login ke Docker Hub
+          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "workflow-ci" 
+      # Login to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      # ✅ Tag Docker Image
+      # Tag the Docker image
       - name: Tag Docker Image
         run: |
-          docker tag workflow ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO }}:latest
-
-      # ✅ Push Docker Image
-      - name: Push Docker Image to Docker Hub
+          docker tag workflow-ci ${{ secrets.DOCKER_HUB_USERNAME }}/workflow-ci:latest
+      # Push Docker image to Docker Hub
+      - name: Push Docker Image
         run: |
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO }}:latest
-            
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/workflow-ci:latest
