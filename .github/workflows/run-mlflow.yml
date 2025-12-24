@@ -30,29 +30,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           # Kita butuh library ini di environment runner agar bisa setup experiment
-          pip install mlflow==2.19.0 pandas scikit-learn numpy seaborn
+          pip install mlflow pandas scikit-learn numpy seaborn
         
       - name: Run mlflow project
         working-directory: ./MLProject
         run: |
           # Kita pass nama experiment ke dalam mlflow run
           python modelling_tuning.py
-      - name: Get latest MLflow run_id
-        run: |
-          # Mengambil Run ID terakhir dari experiment yang spesifik
-          RUN_ID=$(python -c "
-          import mlflow
-          mlflow.set_tracking_uri('${{ env.MLFLOW_TRACKING_URI }}')
-          experiment = mlflow.get_experiment_by_name('${{ env.EXPERIMENT_NAME }}')
-          runs = mlflow.search_runs(experiment_ids=[experiment.experiment_id])
-          print(runs.iloc[0].run_id)
-          ")
-          
-          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
-          echo "Latest run_id: $RUN_ID"
+  
       - name: Build Docker Model
         run: |
-          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "workflow" 
+          mlflow models build-docker --model-uri "models:/knn_tuning/latest" --name "workflow" 
       # Login to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
@@ -63,7 +51,7 @@ jobs:
       # Tag the Docker image
       - name: Tag Docker Image
         run: |
-          docker tag workflow-ci ${{ secrets.DOCKER_HUB_USERNAME }}/workflow:latest
+          docker tag workflow ${{ secrets.DOCKER_HUB_USERNAME }}/workflow:latest
       # Push Docker image to Docker Hub
       - name: Push Docker Image
         run: |
