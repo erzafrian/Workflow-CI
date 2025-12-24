@@ -55,7 +55,6 @@ jobs:
           mlflow models build-docker \
             -m "runs:/$RUN_ID/model" \
             -n "workflow_temp" \
-            --install-java
 
           # Tag ulang image dari mlflow ke format Docker Hub
           docker tag workflow_temp "$FULL_TAG"
