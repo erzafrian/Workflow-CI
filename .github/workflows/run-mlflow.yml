@@ -34,7 +34,7 @@ jobs:
         run: python modelling.py
 
       - name: Get latest Run ID
-        id: get_run_id
+        id: bbad8bfe5c72456b865f0ad15d824159
         run: |
           # Kita cari Run ID terbaru dari eksperimen yang dibuat modelling.py
           RUN_ID=$(python -c "
@@ -58,7 +58,7 @@ jobs:
           
           # Folder 'model' adalah default dari mlflow.autolog()
           mlflow models build-docker \
-            -m "runs:/bbad8bfe5c72456b865f0ad15d824159/model" \
+            -m "runs:/$RUN_ID/model" \
             -n "workflow_temp" \
 
           # Tag ulang image dari mlflow ke format Docker Hub
