@@ -36,7 +36,7 @@ jobs:
         working-directory: ./MLProject
         run: |
           # Kita pass nama experiment ke dalam mlflow run
-          python modelling.py
+          python modelling_tuning.py
       - name: Get latest MLflow run_id
         run: |
           # Mengambil Run ID terakhir dari experiment yang spesifik
