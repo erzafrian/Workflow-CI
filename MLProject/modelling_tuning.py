@@ -83,10 +83,7 @@ def train_and_log(n_neighbors, weights):
         print(f"Terjadi kesalahan: {e}")
 
 if __name__ == "__main__":
-    # Setup Argument Parser to catch MLProject parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_neighbors", type=int, default=5)
-    parser.add_argument("--weights", type=str, default="uniform")
+    parser.add_argument("--data_path", type=str, required=True)
     args = parser.parse_args()
-
-    train_and_log(n_neighbors=args.n_neighbors, weights=args.weights)
+    main(args.data_path)
