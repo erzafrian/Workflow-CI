@@ -65,7 +65,7 @@ jobs:
           FULL_TAG="${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest"
           
           # MLflow menyimpan model di: mlruns/<experiment_id>/<run_id>/artifacts/model
-          MODEL_PATH="mlruns/745624129257364331/models/m-b4213cdac1fd4d4885f9de1540bf8c48/artifacts/model"
+          MODEL_PATH="file:E:/Kuliah Semester 5/Asah led by Dicoding/Modul Dicoding/Membangun Sistem Machine Learning/Proyek Akhir/mlruns/745624129257364331/models/m-b4213cdac1fd4d4885f9de1540bf8c48/artifacts/model"
           
           echo "Building Docker from path: $MODEL_PATH"
 
