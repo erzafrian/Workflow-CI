@@ -1,8 +1,8 @@
-name: Train and Deploy
+name: CI MLflow
 
 on:
   push:
-    branches: ["master"]
+    branches: ["main"]
     paths-ignore:
       - './MLProject/Tautan ke Docker Hub.txt'
 
