@@ -100,7 +100,7 @@ jobs:
       - name: Build Docker Image from MLflow model
         run: |
           source ~/.bashrc
-          conda activate heart-attack-predictor
+          conda activate KNN_Tuning_Final
           mlflow models build-docker --model-uri "file://$GITHUB_WORKSPACE/MLProject/mlruns/0/$RUN_ID/artifacts/model" --name workflow
 
       # ✅ Login ke Docker Hub
@@ -113,7 +113,7 @@ jobs:
       # ✅ Tag Docker Image
       - name: Tag Docker Image
         run: |
-          docker tag cc ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO }}:latest
+          docker tag workflow ${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPO }}:latest
 
       # ✅ Push Docker Image
       - name: Push Docker Image to Docker Hub
