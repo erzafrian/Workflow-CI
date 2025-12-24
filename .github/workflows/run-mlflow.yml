@@ -27,7 +27,7 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install -r MLProject/requirements.txt
-          pip install mlflow  # Pastikan mlflow terinstall di runner
+          pip install mlflow  
 
       - name: Run Modelling
         working-directory: ./MLProject
@@ -56,7 +56,6 @@ jobs:
         run: |
           FULL_TAG="${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest"
           
-          # Gunakan URI runs:/ bukannya models:/ karena kita belum pakai Model Registry
           # Folder 'model' adalah default dari mlflow.autolog()
           mlflow models build-docker \
             -m "runs:/$RUN_ID/model" \
