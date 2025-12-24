@@ -19,8 +19,7 @@ def train_and_log(n_neighbors, weights):
 
     try:
         # 1. Load Dataset
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        csv_path = os.path.join(base_path, '..', 'MLProject', 'customer_behavior_preprocessing.csv')
+        csv_path = './customer_behavior_preprocessing.csv'
         
         if not os.path.exists(csv_path):
             raise FileNotFoundError(f"Dataset tidak ditemukan di: {csv_path}")
@@ -84,6 +83,7 @@ def train_and_log(n_neighbors, weights):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_path", type=str, required=True)
+    parser.add_argument("--n_neighbors", type=int, required=True, default=5)
+    parser.add_argument("--weights", type=int, required=True, default=3)
     args = parser.parse_args()
-    train_and_log(args.data_path)
+    train_and_log(args.n_neighbors, args.weights)
