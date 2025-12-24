@@ -8,8 +8,9 @@ on:
 
 env:
   IMAGE_NAME: "knn-behavior"
-  # Pastikan URI menggunakan path absolut
   MLFLOW_TRACKING_URI: "${{ github.workspace }}/MLProject/mlruns"
+  # Sesuaikan nama eksperimen sesuai di modelling.py
+  EXPERIMENT_NAME: "Eksperimen_SML_KNN_Erza"
 
 jobs:
   train-test-model:
@@ -36,44 +37,50 @@ jobs:
       - name: Get MLflow Metadata
         id: meta
         run: |
-          # Mencari Run ID dan Experiment ID terbaru
+          # Mengambil Metadata untuk membangun path fisik secara dinamis
           python -c "
           import mlflow
           import os
           uri = 'file://' + os.environ['MLFLOW_TRACKING_URI']
           mlflow.set_tracking_uri(uri)
-          exp = mlflow.get_experiment_by_name('Eksperimen_SML_KNN_Erza')
+          
+          # Ambil eksperimen dan run terbaru
+          exp = mlflow.get_experiment_by_name(os.environ['EXPERIMENT_NAME'])
           runs = mlflow.search_runs(experiment_ids=[exp.experiment_id], order_by=['attribute.start_time DESC'])
           
           run_id = runs.iloc[0].run_id
           exp_id = exp.experiment_id
           
-          # Simpan ke environment variable untuk step berikutnya
+          # Simpan ke environment github
           with open(os.environ['GITHUB_ENV'], 'a') as f:
               f.write(f'RUN_ID={run_id}\n')
               f.write(f'EXP_ID={exp_id}\n')
           "
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
       - name: Build and Push Docker Image
         run: |
           FULL_TAG="${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest"
           
-          # MLflow menyimpan model di: mlruns/<experiment_id>/<run_id>/artifacts/model
-          MODEL_PATH="file:E:/Kuliah Semester 5/Asah led by Dicoding/Modul Dicoding/Membangun Sistem Machine Learning/Proyek Akhir/mlruns/745624129257364331/models/m-b4213cdac1fd4d4885f9de1540bf8c48/artifacts/model"
+          # MENYESUAIKAN PATH BERDASARKAN INPUT ANDA:
+          # Format: mlruns/<exp_id>/<run_id>/artifacts/model (Standar autolog)
+          # Atau jika folder anda menggunakan 'models':
+          MODEL_PATH="${{ env.MLFLOW_TRACKING_URI }}/${{ env.EXP_ID }}/${{ env.RUN_ID }}/artifacts/model"
           
-          echo "Building Docker from path: $MODEL_PATH"
+          echo "Mengecek keberadaan path model..."
+          if [ ! -d "$MODEL_PATH" ]; then
+            echo "Path artifacts/model tidak ditemukan, mencoba path alternatif 'models'..."
+            MODEL_PATH="${{ env.MLFLOW_TRACKING_URI }}/${{ env.EXP_ID }}/${{ env.RUN_ID }}/models"
+          fi
+          
+          echo "Membangun Docker dari: $MODEL_PATH"
+
+          # Login ke Docker Hub
+          echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
           mlflow models build-docker \
             -m "$MODEL_PATH" \
-            -n "workflow_temp" 
+            -n "workflow_temp" \
 
-          # Tag ulang ke format Docker Hub
           docker tag workflow_temp "$FULL_TAG"
           docker push "$FULL_TAG"
 
