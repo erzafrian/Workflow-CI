@@ -71,8 +71,7 @@ jobs:
 
           mlflow models build-docker \
             -m "$MODEL_PATH" \
-            -n "workflow_temp" \
-            --install-java
+            -n "workflow_temp" 
 
           # Tag ulang ke format Docker Hub
           docker tag workflow_temp "$FULL_TAG"
