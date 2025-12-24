@@ -54,7 +54,7 @@ jobs:
 
       - name: Build Docker Model
         run: |
-          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "workflow-ci" 
+          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "workflow" 
 
       # Login to Docker Hub
       - name: Log in to Docker Hub
@@ -66,9 +66,9 @@ jobs:
       # Tag the Docker image
       - name: Tag Docker Image
         run: |
-          docker tag workflow-ci ${{ secrets.DOCKER_HUB_USERNAME }}/workflow-ci:latest
+          docker tag workflow ${{ secrets.DOCKER_HUB_USERNAME }}/workflow:latest
 
       # Push Docker image to Docker Hub
       - name: Push Docker Image
         run: |
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/workflow-ci:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/workflow:latest
