@@ -1,4 +1,4 @@
-name: Eksperimen_SML_KNN_Erza
+name: KNN_Tuning_Final
 
 conda_env: conda.yaml
 
