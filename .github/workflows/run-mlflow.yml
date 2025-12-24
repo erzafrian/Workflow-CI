@@ -58,7 +58,7 @@ jobs:
           
           # Folder 'model' adalah default dari mlflow.autolog()
           mlflow models build-docker \
-            -m "runs:/$RUN_ID/model" \
+            -m "runs:/bbad8bfe5c72456b865f0ad15d824159/model" \
             -n "workflow_temp" \
 
           # Tag ulang image dari mlflow ke format Docker Hub
