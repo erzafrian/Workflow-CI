@@ -47,7 +47,7 @@ jobs:
           FULL_TAG="${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest"
   
           mlflow models build-docker \
-            -m "models:/knn_tuned_model_v2/latest" \
+            -m "models:/knn_tuned_model/latest" \
             -n "$FULL_TAG"
   
           docker push "$FULL_TAG"
