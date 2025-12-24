@@ -30,7 +30,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           # Kita butuh library ini di environment runner agar bisa setup experiment
-          pip install mlflow==2.19.0 pandas scikit-learn numpy
+          pip install mlflow==2.19.0 pandas scikit-learn numpy seaborn
         
       - name: Run mlflow project
         working-directory: ./MLProject
