@@ -37,7 +37,7 @@ jobs:
         id: get_run_id
         run: |
           # Kita cari Run ID terbaru dari eksperimen yang dibuat modelling.py
-          RUN_ID=mlruns/745624129257364331/models/m-b4213cdac1fd4d4885f9de1540bf8c48/artifacts/model
+          RUN_ID=/745624129257364331/models/m-b4213cdac1fd4d4885f9de1540bf8c48/artifacts/model
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
 
       - name: Log in to Docker Hub
