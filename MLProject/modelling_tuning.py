@@ -75,7 +75,7 @@ def train_and_log(n_neighbors, weights):
 
             # Upload entire folder as artifact
             mlflow.log_artifacts(local_dir, artifact_path="model_output")
-            
+            mlflow.sklearn.log_model(knn, name="knn_tuning", registered_model_name="knn_tuning")
             print(f"Selesai! Accuracy: {metrics['accuracy']:.4f}")
 
     except Exception as e:
