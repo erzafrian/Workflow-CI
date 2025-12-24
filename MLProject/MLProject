@@ -5,7 +5,8 @@ conda_env: conda.yaml
 entry_points:
   main:
     parameters:
-      data_path: {type: str, default: "customer_behavior_preprocessing.csv"}
-    command: "python modelling_tuning.py --data_path {data_path}"
+      n_neighbors: {type: int, default: 5}
+      weights: {type: string, default: "uniform"}
+    command: "python train.py --n_neighbors {n_neighbors} --weights {weights}"
 
 
