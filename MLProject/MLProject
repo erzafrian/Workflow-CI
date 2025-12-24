@@ -7,5 +7,5 @@ entry_points:
     parameters:
       dataset_path: {type: str, default: "customer_behavior_preprocessing.csv"}
       n_neighbors: {type: int, default: 5}
-    command: "python train_knn.py {dataset_path} {n_neighbors}"
+    command: "python modelling_tuning.py {dataset_path} {n_neighbors}"
 
