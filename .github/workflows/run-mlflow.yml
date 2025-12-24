@@ -40,12 +40,7 @@ jobs:
       - name: Get latest MLflow run_id
         run: |
           # Mengambil Run ID terakhir dari experiment yang spesifik
-          RUN_ID=$(python -c "
-          import mlflow
-          mlflow.set_tracking_uri('${{ env.MLFLOW_TRACKING_URI }}')
-          experiment = mlflow.get_experiment_by_name('${{ env.EXPERIMENT_NAME }}')
-          runs = mlflow.search_runs(experiment_ids=[experiment.experiment_id])
-          print(runs.iloc[0].run_id)
+          RUN_ID=$(python -c "mlruns/745624129257364331/models/m-b4213cdac1fd4d4885f9de1540bf8c48/artifacts/model
           ")
           
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
