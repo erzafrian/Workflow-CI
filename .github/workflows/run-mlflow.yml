@@ -1,73 +1,70 @@
-name: CI MLflow
+name: CI/CD MLflow
 
 on:
   push:
-    branches: ["main"]
-    paths-ignore:
-      - 'MLProject/Tautan ke Docker Hub.txt'
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
+# Set variable global agar konsisten
 env:
-  IMAGE_NAME: "knn-behavior"
-  # Use file:// so MLflow CLI treats this as a local file-based tracking store
+  # Menggunakan path absolut untuk tracking URI
   MLFLOW_TRACKING_URI: "file://${{ github.workspace }}/MLProject/mlruns"
+  EXPERIMENT_NAME: "Eksperimen_SML_KNN_Erza"
 
 jobs:
-  train-test-model:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Set up Python 3.12.7
         uses: actions/setup-python@v4
         with:
           python-version: "3.12.7"
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: |
-          pip install -r MLProject/requirements.txt
-          pip install mlflow
-
-      - name: Run Modelling
+          python -m pip install --upgrade pip
+          # Kita butuh library ini di environment runner agar bisa setup experiment
+          pip install mlflow pandas scikit-learn numpy
+        
+      - name: Run mlflow project
         working-directory: ./MLProject
-        run: python modelling.py
-
-      - name: Get latest Run ID
-        id: get_run_id
         run: |
-          # Find the most recent run directory inside MLProject/mlruns
-          RUN_DIR=$(ls -1dt MLProject/mlruns/*/* | head -n1)
-          if [ -z "$RUN_DIR" ]; then
-            echo "No run folder found under MLProject/mlruns" >&2
-            exit 1
-          fi
-          RUN_ID=$(basename "$RUN_DIR")
-          echo "Found run dir: $RUN_DIR"
+          # Kita pass nama experiment ke dalam mlflow run
+          python modelling.py
+      - name: Get latest MLflow run_id
+        run: |
+          # Mengambil Run ID terakhir dari experiment yang spesifik
+          RUN_ID=$(python -c "
+          import mlflow
+          mlflow.set_tracking_uri('${{ env.MLFLOW_TRACKING_URI }}')
+          experiment = mlflow.get_experiment_by_name('${{ env.EXPERIMENT_NAME }}')
+          runs = mlflow.search_runs(experiment_ids=[experiment.experiment_id])
+          print(runs.iloc[0].run_id)
+          ")
+          
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
-          echo "RUN_DIR=$RUN_DIR" >> $GITHUB_ENV
-          echo "run_id=$RUN_ID"
-
+          echo "Latest run_id: $RUN_ID"
+      - name: Build Docker Model
+        run: |
+          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "workflow-ci" 
+      # Login to Docker Hub
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Build and Push Docker Image
+      # Tag the Docker image
+      - name: Tag Docker Image
         run: |
-          FULL_TAG="${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest"
-          
-          # Make sure MLFLOW_TRACKING_URI is exported (GH env sets it globally, but export to be explicit)
-          export MLFLOW_TRACKING_URI="${{ env.MLFLOW_TRACKING_URI }}"
-
-          echo "Using RUN_ID: $RUN_ID"
-          # Build the MLflow model docker image from the run's model artifact
-          mlflow models build-docker \
-            -m "runs:/$RUN_ID/model" \
-            -n "workflow_temp"
-
-          # Retag and push
-          docker tag workflow_temp "$FULL_TAG"
-          docker push "$FULL_TAG"
-
+          docker tag workflow-ci ${{ secrets.DOCKER_HUB_USERNAME }}/workflow-ci:latest
+      # Push Docker image to Docker Hub
+      - name: Push Docker Image
+        run: |
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/workflow-ci:latest
