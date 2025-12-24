@@ -7,6 +7,6 @@ entry_points:
     parameters:
       n_neighbors: {type: int, default: 5}
       weights: {type: string, default: "uniform"}
-    command: "python train.py --n_neighbors {n_neighbors} --weights {weights}"
+    command: "python modelling_tuning.py --n_neighbors {n_neighbors} --weights {weights}"
 
 
